@@ -61,6 +61,7 @@ func addIndexAddCmd(parent *cobra.Command) {
 	indexCmd.Flags().StringP("tag", "t", "", "custom tag for container image being built")
 	indexCmd.Flags().Bool("permissive", false, "allow registry load errors")
 	indexCmd.Flags().StringP("mode", "", "replaces", "graph update mode that defines how channel graphs are updated. One of: [replaces, semver, semver-skippatch]")
+	indexCmd.Flags().Bool("local-bundle", false, "if enabled, the manifests of the bundle will be read from the index database rather from the remote bundle image on installing the bundle.")
 
 	if err := indexCmd.Flags().MarkHidden("debug"); err != nil {
 		logrus.Panic(err.Error())
@@ -128,6 +129,11 @@ func runIndexAddCmdFunc(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	localBundle, err := cmd.Flags().GetBool("local-bundle")
+	if err != nil {
+		return err
+	}
+
 	logger := logrus.WithFields(logrus.Fields{"bundles": bundles})
 
 	logger.Info("building the index")
@@ -147,6 +153,7 @@ func runIndexAddCmdFunc(cmd *cobra.Command, args []string) error {
 		Permissive:        permissive,
 		Mode:              modeEnum,
 		SkipTLS:           skipTLS,
+		EnableLocalBundle: localBundle,
 	}
 
 	err = indexAdder.AddToIndex(request)

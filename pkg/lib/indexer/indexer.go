@@ -57,6 +57,7 @@ type AddToIndexRequest struct {
 	Tag               string
 	Mode              pregistry.Mode
 	SkipTLS           bool
+	EnableLocalBundle bool
 }
 
 // AddToIndex is an aggregate API used to generate a registry index image with additional bundles
@@ -74,12 +75,13 @@ func (i ImageIndexer) AddToIndex(request AddToIndexRequest) error {
 
 	// Run opm registry add on the database
 	addToRegistryReq := registry.AddToRegistryRequest{
-		Bundles:       request.Bundles,
-		InputDatabase: databasePath,
-		Permissive:    request.Permissive,
-		Mode:          request.Mode,
-		SkipTLS:       request.SkipTLS,
-		ContainerTool: i.PullTool,
+		Bundles:           request.Bundles,
+		InputDatabase:     databasePath,
+		Permissive:        request.Permissive,
+		Mode:              request.Mode,
+		SkipTLS:           request.SkipTLS,
+		ContainerTool:     i.PullTool,
+		EnableLocalBundle: request.EnableLocalBundle,
 	}
 
 	// Add the bundles to the registry
