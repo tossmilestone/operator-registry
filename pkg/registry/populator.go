@@ -23,18 +23,20 @@ type Dependencies struct {
 
 // DirectoryPopulator loads an unpacked operator bundle from a directory into the database.
 type DirectoryPopulator struct {
-	loader      Load
-	graphLoader GraphLoader
-	querier     Query
-	imageDirMap map[image.Reference]string
+	loader            Load
+	graphLoader       GraphLoader
+	querier           Query
+	imageDirMap       map[image.Reference]string
+	enableLocalBundle bool
 }
 
-func NewDirectoryPopulator(loader Load, graphLoader GraphLoader, querier Query, imageDirMap map[image.Reference]string) *DirectoryPopulator {
+func NewDirectoryPopulator(loader Load, graphLoader GraphLoader, querier Query, imageDirMap map[image.Reference]string, enableLocalBundle bool) *DirectoryPopulator {
 	return &DirectoryPopulator{
-		loader:      loader,
-		graphLoader: graphLoader,
-		querier:     querier,
-		imageDirMap: imageDirMap,
+		loader:            loader,
+		graphLoader:       graphLoader,
+		querier:           querier,
+		imageDirMap:       imageDirMap,
+		enableLocalBundle: enableLocalBundle,
 	}
 }
 
@@ -125,7 +127,11 @@ func (i *DirectoryPopulator) loadManifests(imagesToAdd []*ImageInput, mode Mode)
 				return err
 			}
 			for _, image := range validImagesToAdd {
-				err := i.loadManifestsReplaces(image.bundle, image.annotationsFile)
+				bundle := *image.bundle
+				if i.enableLocalBundle {
+					bundle.BundleImage = ""
+				}
+				err := i.loadManifestsReplaces(&bundle, image.annotationsFile)
 				if err != nil {
 					return err
 				}
@@ -133,14 +139,22 @@ func (i *DirectoryPopulator) loadManifests(imagesToAdd []*ImageInput, mode Mode)
 		}
 	case SemVerMode:
 		for _, image := range imagesToAdd {
-			err := i.loadManifestsSemver(image.bundle, image.annotationsFile, false)
+			bundle := *image.bundle
+			if i.enableLocalBundle {
+				bundle.BundleImage = ""
+			}
+			err := i.loadManifestsSemver(&bundle, image.annotationsFile, false)
 			if err != nil {
 				return err
 			}
 		}
 	case SkipPatchMode:
 		for _, image := range imagesToAdd {
-			err := i.loadManifestsSemver(image.bundle, image.annotationsFile, true)
+			bundle := *image.bundle
+			if i.enableLocalBundle {
+				bundle.BundleImage = ""
+			}
+			err := i.loadManifestsSemver(&bundle, image.annotationsFile, true)
 			if err != nil {
 				return err
 			}
